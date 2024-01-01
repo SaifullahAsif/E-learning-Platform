@@ -1,5 +1,5 @@
-let catmodel=require('../../models/Category')
-let express=require('express')
+let catmodel = require('../../models/Category')
+let express = require('express')
 let router= express.Router()
 
 router.post('/category/add', (req, res)=>{
