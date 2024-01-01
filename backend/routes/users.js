@@ -1,20 +1,27 @@
-const express = require("express");
-const router = express.Router();
+var express = require('express');
+var router = express.Router();
+
+
 const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const keys = require("../../config/keys");
-const User = require("../../models/User");
+//Load user model for email exist checking
+const keys = require("../config/keys");
+const User = require("../models/User");
 const passport = require("passport");
 
+//Load input  validation
+const validateRegisterInput = require("../validation/register");
+const validateLoginInput = require("../validation/login");
 
-const validateRegisterInput = require("../../validation/register");
-const validateLoginInput = require("../../validation/login");
-
+// @route  GET   api/users/register
+// @desc   Register users route
+// @access Public
 
 router.post("/users/register", (req, res) => {
   const { errors, isValid } = validateRegisterInput(req.body);
 
+  // Check Validation
   if (!isValid) {
     return res.status(400).json(errors);
   }
@@ -25,9 +32,9 @@ router.post("/users/register", (req, res) => {
       return res.status(400).json(errors);
     } else {
       const avatar = gravatar.url(req.body.email, {
-        s: "200", 
-        r: "pg", 
-        d: "mm" 
+        s: "200", //Size
+        r: "pg", //Rating
+        d: "mm" //Default
       });
 
       const newUser = new User({
@@ -52,10 +59,20 @@ router.post("/users/register", (req, res) => {
   });
 });
 
+// @route  GET   api/users/login
+// @desc   Login users route => returning jwt token
+// @access Public
+
+/* GET users listing. */
+router.get('/', function(req, res, next) {
+  res.send('respond with a resource');
+});
+
 
 router.post("/users/login", (req, res) => {
   const { errors, isValid } = validateLoginInput(req.body);
 
+  // Check Validation
   if (!isValid) {
     return res.status(400).json(errors);
   }
@@ -63,14 +80,18 @@ router.post("/users/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
 
+  //Find user by email
   User.findOne({ email }).then(user => {
     if (!user) {
       errors.email = "User not found";
       return res.status(404).json(errors);
     }
+    //check password
     bcrypt.compare(password, user.password).then(isMatch => {
       if (isMatch) {
+        //User Match
 
+        //Create jt payload
         const payload = {
           id: user.id,
           first_name: user.first_name,
@@ -100,11 +121,15 @@ router.post("/users/login", (req, res) => {
   });
 });
 
+// @route  GET   api/users/current
+// @desc   Return/retrive the current user from the token
+// @access Private
 
 router.get(
   "/current",
   passport.authenticate("jwt", { session: false }),
   (req, res) => {
+    // res.json(req.user);
     res.json({
       id: req.user.id,
       first_name: req.user.first_name,
@@ -114,9 +139,11 @@ router.get(
 );
 
 router.get("/users", (req, res) => {
+  //var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
 
   User.find()
       .then(doc => {
+         // res.setHeader('Access-Control-Expose-Headers', 'Content-Range');
           res.setHeader('Content-Range', 'users 0-5/5');
           res.json(doc)
           
@@ -129,6 +156,7 @@ router.get("/users", (req, res) => {
 })
 
 router.post('/user', (req, res)=>{
+  //req.body
   if(!req.body){
       return res.status(400).send("request body is missing")
   }
@@ -148,6 +176,7 @@ router.post('/user', (req, res)=>{
 })
 
 router.get('/user', (req, res) => {
+  //var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
 
   User.findOne({
       _id: req.query.id
@@ -164,6 +193,7 @@ router.get('/user', (req, res) => {
 
 
 router.put('/user/', (req, res) => {
+  //var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
 
   User.findOneAndUpdate({
       _id: req.query.id
@@ -181,6 +211,7 @@ router.put('/user/', (req, res) => {
 })
 
 router.delete('/user', (req, res) => {
+  //var decoded = jwt.verify(req.headers['authorization'], process.env.SECRET_KEY)
 
   User.findOneAndRemove({
       _id: req.query.id
