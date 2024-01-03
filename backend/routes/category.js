@@ -2,6 +2,7 @@ let catmodel = require('../../models/Category')
 let express = require('express')
 let router= express.Router()
 
+
 router.post('/category/add', (req, res)=>{
     if(!req.body){
         return res.status(400).send("request body is missing")
